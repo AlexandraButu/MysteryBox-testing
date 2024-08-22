@@ -12,6 +12,7 @@ const CODE_PATH: MxscPath = MxscPath::new("output/mystery-box.mxsc.json");
 const BALANCE: u64 = 2_000;
 
 const TOKEN_ID_TTO: TestTokenIdentifier = TestTokenIdentifier::new("TTO-281def");
+const TOKEN_ID_COLECTIE : TestTokenIdentifier = TestTokenIdentifier::new("CLC-203e07");
 const WRONG_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRONG_TOKEN");
 const MYSTERYBOX_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TTO-281def");
 
@@ -70,6 +71,34 @@ impl MysteryBoxTestState{
         self.world.write_scenario_trace(filename);
     }
     ///////
+  
+  /*fn set_esdt_local_roles(&mut self, sc_address: TestSCAddress, token_id: TestTokenIdentifier, roles: &[EsdtLocalRole])  {
+
+   
+    let roles = vec![
+        EsdtLocalRole::Mint, 
+        EsdtLocalRole::Burn, 
+       EsdtLocalRole::NftCreate, 
+        EsdtLocalRole::NftAddQuantity,
+        EsdtLocalRole::NftBurn,
+        EsdtLocalRole::NftAddUri,
+       EsdtLocalRole::NftUpdateAttributes,
+        EsdtLocalRole::Transfer
+
+    ];
+
+        self.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(SC_ADDRESS)
+        .typed(mysterybox_proxy::MysteryBoxProxy)
+   //     .set_special_roles(SC_ADDRESS, TOKEN_ID_COLECTIE ,roles.into_iter())
+         .set_roles()
+          .run();
+
+
+  }   */
+
 
 
     fn deploy_mysterybox_contract(&mut self) -> &mut Self {
@@ -86,16 +115,31 @@ impl MysteryBoxTestState{
 }
 
 
+    fn set_time_block(&mut self, timestamp: u64){
+        self.world.current_block().block_timestamp(timestamp);
+}
 
 }
+
+
 
 #[test]
 fn test_deploy() {
     let mut world = MysteryBoxTestState::new();
+    
     world.deploy_mysterybox_contract();
 
 
+    world.write_scenario("scenarios/init-mysterybox.scen.json");
+   
+}
 
-    world.write_scenario("scenarios/deploy.scen.json");
+#[test]
+fn test_set_roles() {
+    let mut world = MysteryBoxTestState::new();
+    world.deploy_mysterybox_contract();
+
+   // world.set_esdt_local_roles(SC_ADDRESS, TOKEN_ID_COLECTIE, &[EsdtLocalRole::Mint]); 
+
    
 }
