@@ -7,6 +7,8 @@ use multiversx_sc_snippets::imports::*;
 use multiversx_sc_snippets::sdk;
 //use mystery_box::__wasm__endpoints__::set_roles;
 use serde::{Deserialize, Serialize};
+use core::task;
+use std::f64::consts::E;
 use std::{
    io::{Read, Write},
    path::Path,
@@ -16,10 +18,14 @@ use std::{
 //use mystery_box::config::RewardType;
 use crate::proxy::RewardType;
 
+//use async_std::task;
+use tokio::time::sleep;
+use tokio::task::spawn;
+use tokio::time::Duration;
 
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
-const TOKEN_IDENTIFIER: &str = "TTO-281def";
+const TOKEN_IDENTIFIER: &str = "CLC-203e07";
 const INVALID_TOKEN_ID: &str = "xyz";
 
 
@@ -55,7 +61,8 @@ async fn main() {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct State {
-   contract_address: Option<Bech32Address>
+   contract_address: Option<Bech32Address>,
+    collection: Option<String>
 }
 
 
@@ -83,6 +90,18 @@ impl State {
                .as_ref()
                .expect("no known contract, deploy first")
        }
+
+       pub fn set_collection(&mut self, collection: String) {
+        self.collection = Some(collection);
+    }
+
+    /// Returns the collection
+    pub fn get_collection(&self) -> &String {
+        self.collection     
+            .as_ref()
+            .expect("no known collection, create first")
+    }
+
    }
   
    impl Drop for State {
@@ -286,14 +305,13 @@ impl ContractInteract {
        let mut winning_rates_list = MultiValueVec::<MultiValue6::<RewardType, EgldOrEsdtTokenIdentifier<StaticApi>, BigUint<StaticApi>, ManagedBuffer<StaticApi>, u64, u64>>::new();
 
 
-
        let mut reward1 = (
            RewardType::ExperiencePoints,
            EgldOrEsdtTokenIdentifier::esdt(managed_token_id!(TOKEN_IDENTIFIER)),
-           BigUint::from(5u128),
+           BigUint::from(1u128),
            managed_buffer!(b"ExperiencePoints"),
            10_000,
-           1,
+           2,
        ).into();
        winning_rates_list.push(reward1);
   
@@ -476,9 +494,9 @@ impl ContractInteract {
        println!("Result: {result_value:?}");
    }
 
-
-   async fn global_cooldown_epoch(&mut self, reward : RewardType ) -> BigUint<StaticApi> {
-
+  // Verifică dacă o recompensă respectă perioada de răcire globală înainte de a putea fi câștigată din nou
+   //async fn global_cooldown_epoch(&mut self, reward : RewardType ) -> BigUint<StaticApi> {
+    async fn global_cooldown_epoch(&mut self, reward : RewardType )  {
 
       // let reward = RewardType::None;
 
@@ -496,7 +514,7 @@ impl ContractInteract {
 
 
        println!("Result: {result_value:?}");
-       BigUint::from(result_value)
+       //BigUint::from(result_value)
    }
 
 
@@ -617,7 +635,7 @@ impl ContractInteract {
    }
 
 
-
+/*
     async fn set_roles(&mut self) {
     
         let address =self.state.current_address();
@@ -627,7 +645,7 @@ impl ContractInteract {
         self.interactor
         .tx()
         .from(&self.wallet_address)
-        .to(ESDTSystemSCAddress)
+        .to(ESDTSystemSCAddress.to_managed_address())
         .typed(ESDTSystemSCProxy)
         .set_special_roles(
             address,
@@ -636,11 +654,85 @@ impl ContractInteract {
         )
         .async_call_and_exit()
         }
+ */
+    
 
+    async fn set_roles(&mut self, ) {
+
+  
+        let address = self.state.current_address();
+        let managed_address = ManagedAddress::from_address(&address.to_address());
+
+        let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
+
+        let roles = vec![
+        EsdtLocalRole::Mint, 
+        EsdtLocalRole::Burn, 
+       EsdtLocalRole::NftCreate, 
+       EsdtLocalRole::NftAddQuantity,
+       EsdtLocalRole::NftBurn,
+        EsdtLocalRole::NftAddUri,
+        EsdtLocalRole::NftUpdateAttributes,
+        EsdtLocalRole::Transfer
+
+    ];
+    
+
+        self.interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(ESDTSystemSCAddress.to_managed_address())
+            .gas(70_000_000u64)
+            .typed(ESDTSystemSCProxy)
+            .set_special_roles(&managed_address, &mystery_box_token_id,roles.into_iter())
+            .prepare_async()
+            .run()
+            .await;
     }
 
 
 
+
+
+    async fn issue_sft_collection(&mut self)  {
+
+    
+      //  let address = self.state.current_address();
+
+        //let managed_address = ManagedAddress::from_address(&address.to_address());Q
+
+        const VALUE: u128=  50000000000000000u128;
+
+     //   let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
+
+      
+     let token_name = managed_buffer!(b"Nume");
+     let token_ticker = managed_buffer!(b"CLC");
+     let properties = SemiFungibleTokenProperties::default();
+
+        let collection = self.interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(ESDTSystemSCAddress.to_managed_address())
+            .gas(70_000_000u64)
+            .typed(ESDTSystemSCProxy)
+            .issue_semi_fungible(   BigUint::from(VALUE),&token_name, &token_ticker, properties)
+            .returns(  ReturnsNewTokenIdentifier)
+            .prepare_async()
+            .run()
+            .await;
+
+        
+       let mysterybox_collection = self.state.set_collection(collection.to_string());
+    
+       println!("Collection name: {mysterybox_collection:?}");
+       //mysterybox_collection
+
+   
+    }
+
+
+}
 
 //TESTE
 
@@ -652,7 +744,6 @@ impl ContractInteract {
 
 
        interact.deploy().await;
-
 
    }
 
@@ -703,7 +794,7 @@ impl ContractInteract {
 
 
    #[tokio::test]
-   async fn test_is_admin()
+   async fn test_verify_is_admin()
    {
        let mut interact = ContractInteract::new().await;
 
@@ -725,15 +816,21 @@ impl ContractInteract {
    }
 
 
-
    #[tokio::test]
-   async fn test_setup_mysterybox()
+   async fn test_setup_mysterybox_success()
    {
        let mut interact = ContractInteract::new().await;
        interact.setup_mystery_box1().await;
 
    }
 
+   #[tokio::test]
+   async fn test_setup_mysterybox_one_reward()
+   {
+       let mut interact = ContractInteract::new().await;
+       interact.setup_mystery_box_one_reward().await;
+
+   }
 
 
    #[tokio::test]
@@ -747,7 +844,7 @@ impl ContractInteract {
 
 
    #[tokio::test]
-   async fn test_winning_rates()
+   async fn test_get_winning_rates()
    {
        let mut interact = ContractInteract::new().await;
        interact.winning_rates().await;
@@ -755,18 +852,20 @@ impl ContractInteract {
    }
 
 
+
    #[tokio::test]
-   async fn test_global_cooldown_epoch()
+   async fn test_get_global_cooldown_epoch()
    {
        let mut interact = ContractInteract::new().await;
         let reward1 = RewardType::FixedValue;
         let reward2 = RewardType::CustomReward;
-       interact.global_cooldown_epoch(reward1).await;
+        let reward3 = RewardType::ExperiencePoints;
+       interact.global_cooldown_epoch(reward3).await;
    }
 
 
    #[tokio::test]
-   async fn test_mystery_box_uris()
+   async fn test_mystery_box_get_uris()
    {
        let mut interact = ContractInteract::new().await;
        interact.mystery_box_uris().await;
@@ -774,7 +873,7 @@ impl ContractInteract {
 
 
    #[tokio::test]
-   async fn test_mystery_box_token_id()
+   async fn test_mystery_box_get_token_id()
    {
        let mut interact = ContractInteract::new().await;
        interact.mystery_box_token_id().await;
@@ -782,17 +881,34 @@ impl ContractInteract {
 
 
 
-   //ERROR
+   #[tokio::test]
+   async fn test_set_roles()
+   {
+    let mut interact = ContractInteract::new().await;
+    interact.set_roles().await;
+   }
+
+   #[tokio::test]
+   async fn test_generate_sft_collection()
+   {
+    let mut interact = ContractInteract::new().await;
+    interact.issue_sft_collection().await;
+   }
+
+
 
    #[tokio::test]
    async fn test_create_mystery_box()
    {
        let mut interact = ContractInteract::new().await;
-       interact.deploy().await;
+     interact.deploy().await;
        let amount = BigUint::<StaticApi>::from(0u128);
-      //    interact.set_roles();
-          interact.setup_mystery_box1().await;
-       interact.create_mystery_box(amount).await;
+     
+       interact.issue_sft_collection().await;
+      //    interact.setup_mystery_box1().await;
+
+    //      interact.set_roles().await;
+     //  interact.create_mystery_box(amount).await;
 
 
    }

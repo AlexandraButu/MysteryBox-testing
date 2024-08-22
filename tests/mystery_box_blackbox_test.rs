@@ -32,7 +32,9 @@ struct MysteryBoxTestState {
 
 impl MysteryBoxTestState{
     fn new() -> Self {
+
         let mut world = world();
+
         world.start_trace();
 
         world
@@ -62,6 +64,14 @@ impl MysteryBoxTestState{
     }
 
 
+    ///////
+    fn write_scenario(&mut self, filename: &str) 
+    {
+        self.world.write_scenario_trace(filename);
+    }
+    ///////
+
+
     fn deploy_mysterybox_contract(&mut self) -> &mut Self {
 
         self.world
@@ -81,7 +91,11 @@ impl MysteryBoxTestState{
 
 #[test]
 fn test_deploy() {
-    let mut state = MysteryBoxTestState::new();
-    state.deploy_mysterybox_contract();
+    let mut world = MysteryBoxTestState::new();
+    world.deploy_mysterybox_contract();
+
+
+
+    world.write_scenario("scenarios/deploy.scen.json");
    
 }
