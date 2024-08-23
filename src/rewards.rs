@@ -68,16 +68,17 @@ pub trait RewardsModule: config::ConfigModule {
     }
 
     fn check_global_cooldown(&self, current_epoch: u64, reward: &Reward<Self::Api>) -> bool {
-        let global_cooldown_epoch = self.global_cooldown_epoch(&reward.reward_type).get();
+
+         let global_cooldown_epoch = self.global_cooldown_epoch(&reward.reward_type).get(); // Obtine valoarea curenta a cooldown-ului global pentru tipul de recompensa
 
         if reward.epochs_cooldown == 0 {
-            false
-        } else if global_cooldown_epoch <= current_epoch {
+            false  //nu exista cooldown , se acorda recompensa
+        } else if global_cooldown_epoch <= current_epoch { 
             self.global_cooldown_epoch(&reward.reward_type)
                 .set(current_epoch + reward.epochs_cooldown);
-            false
+            false //cooldown-ul global a expirat, recompensa se poate acorda
         } else {
-            true
+            true //recompensa nu se poate acorda pentru ca cooldown-ul global nu a expirat
         }
     }
 }

@@ -1,0 +1,119 @@
+{
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "balance": "2000",
+                    "esdt": {
+                        "str:CLC-203e07": "2000",
+                        "str:TTO-281def": "2000"
+                    }
+                },
+                "address:user1": {
+                    "nonce": "1",
+                    "balance": "2000",
+                    "esdt": {
+                        "str:CLC-203e07": "2000",
+                        "str:TTO-281def": "2000"
+                    }
+                },
+                "address:user2": {
+                    "nonce": "1",
+                    "balance": "2000",
+                    "esdt": {
+                        "str:CLC-203e07": "2000",
+                        "str:TTO-281def": "2000"
+                    }
+                }
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:mystery-box"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "mxsc:output/mystery-box.mxsc.json",
+                "arguments": [
+                    "0x434c432d323033653037"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:mystery-box",
+                "function": "setupMysteryBox",
+                "arguments": [
+                    "0x05",
+                    "0x54544f2d323831646566",
+                    "0x05",
+                    "0x466978656456616c7565",
+                    "0x2710",
+                    "0x01"
+                ],
+                "gasLimit": "30000000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scQuery",
+            "id": "",
+            "tx": {
+                "to": "sc:mystery-box",
+                "function": "getMysteryBoxTokenIdentifier",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "0x434c432d323033653037"
+                ],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockTimestamp": "30"
+            }
+        },
+        {
+            "step": "scQuery",
+            "id": "",
+            "tx": {
+                "to": "sc:mystery-box",
+                "function": "getGlobalCooldownEpoch",
+                "arguments": [
+                    "0x05"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "0x"
+                ],
+                "status": "0"
+            }
+        }
+    ]
+}

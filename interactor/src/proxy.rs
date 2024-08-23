@@ -92,6 +92,30 @@ where
             .original_result()
     }
 
+    pub fn issue<
+        Arg0: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        token_name: Arg0,
+        token_ticker: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("issue")
+            .argument(&token_name)
+            .argument(&token_ticker)
+            .original_result()
+    }
+
+    pub fn get_token_issued(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("get_token_issued")
+            .original_result()
+    }
+
     pub fn set_roles(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -119,6 +143,15 @@ where
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("openMysteryBox")
+            .original_result()
+    }
+
+    pub fn last_error_message(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedBuffer<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lastErrorMessage")
             .original_result()
     }
 
@@ -224,8 +257,7 @@ pub enum RewardType {
 }
 
 #[type_abi]
-#[derive(ManagedVecItem, NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Eq, Clone)]
-#[derive(Debug)]
+#[derive(ManagedVecItem, NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Eq, Clone, Debug)]
 pub struct Reward<Api>
 where
     Api: ManagedTypeApi,
