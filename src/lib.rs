@@ -127,7 +127,7 @@ pub trait MysteryBox:
     fn get_token_issued(&self) -> TokenIdentifier {
         self.mystery_box_token_id().get()
     }
-    
+
     #[endpoint]
     fn set_roles(&self) {
         self.send()
@@ -187,6 +187,7 @@ pub trait MysteryBox:
             !self.blockchain().is_smart_contract(&caller),
             "Only user accounts can open mystery boxes"
         );
+        
         let payment = self.call_value().single_esdt();
         let mystery_box_token_id = self.mystery_box_token_id().get();
         require!(

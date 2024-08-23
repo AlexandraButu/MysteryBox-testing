@@ -118,7 +118,7 @@ impl ContractInteract {
         let wallet_address = interactor.register_wallet(test_wallets::alice());
         let user1_address = interactor.register_wallet(test_wallets::dan());
         let user2_address = interactor.register_wallet(test_wallets::frank());
-
+       
         let contract_code = BytesValue::interpret_from(
             "mxsc:../output/mystery-box.mxsc.json",
             &InterpreterContext::default(),
@@ -454,7 +454,7 @@ impl ContractInteract {
     }
 
 
-    async fn open_mystery_box_by_admin_fail(&mut self, token_id : &str, token_nonce: u64, token_amount: BigUint<StaticApi>, expected_result: ExpectError<'_> ) {
+    async fn open_mystery_box_by_sc(&mut self, sc_account: Address, token_id : &str, token_nonce: u64, token_amount: BigUint<StaticApi>, expected_result: ExpectError<'_> ) {
         //   let token_id = String::new();
         //   let token_nonce = 0u64;
         //   let token_amount = BigUint::<StaticApi>::from(0u128);
@@ -462,7 +462,7 @@ impl ContractInteract {
            let response = self
                .interactor
                .tx()
-               .from(&self.user1_address)
+               .from(sc_account)
                .to(self.state.current_address())
                .gas(50_000_000u64)
                .typed(proxy::MysteryBoxProxy)
@@ -622,6 +622,26 @@ impl ContractInteract {
         println!("Remove admin: {response:?}");
     }
 
+    async fn remove_admin_by_user_fail(&mut self, admin: Bech32Address, expected_result: ExpectError<'_>) {
+        //   let address = bech32::decode("");
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.user2_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .remove_admin(admin)
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Remove admin: {response:?}");
+    }
+
+
     async fn admins(&mut self) {
         let result_value = self
             .interactor
@@ -747,10 +767,21 @@ impl ContractInteract {
     async fn test_remove_admin() {
         let mut interact = ContractInteract::new().await;
 
-        let admin_sters: Bech32Address = interact.user1_address.clone().into();
-
-        interact.remove_admin(admin_sters).await;
+        let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
+        interact.is_admin(admin_de_sters.clone()).await;
+        interact.remove_admin(admin_de_sters).await;
     }
+
+    #[tokio::test]
+    async fn test_remove_admin_by_user_fail() {
+        let mut interact = ContractInteract::new().await;
+
+        let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
+        interact.is_admin(admin_de_sters.clone()).await;
+        interact.remove_admin_by_user_fail(admin_de_sters, ExpectError(4, "You can not remove an admin if you are an user") ).await;
+    }
+
+    
 
     #[tokio::test]
     async fn test_get_admins() {
@@ -912,17 +943,23 @@ impl ContractInteract {
 
 
     #[tokio::test]
-    async fn test_open_mystery_box_by_admin_fail() {
-        let mut interact = ContractInteract::new().await;
+    async fn test_open_mystery_box_by_sc() {
+    let mut interact = ContractInteract::new().await;
 
-        let tokensft =  interact.token_issued().await;
-        let tokensft_str = tokensft.to_string();
-       let token_nonce = 1u64;
-       let token_amount = BigUint::<StaticApi>::from(1u128);
+    let tokensft = "TTO-81fa54";
+    let tokensft_str = tokensft.to_string();
+    let token_nonce = 1u64;
+    let token_amount = BigUint::<StaticApi>::from(1u128);
 
-       let admin_nou: Bech32Address = interact.user1_address.clone().into();
 
-        interact.add_admin(admin_nou.clone()).await;
-        interact.is_admin(admin_nou).await;
-       interact.open_mystery_box_by_admin_fail(&tokensft_str, token_nonce,token_amount , ExpectError(4, "Only user accounts can open mystery boxes") ).await;
-    }
+  //   let sc_account_address = multiversx_sc::types::Address::from_slice(b"erd1qqqqqqqqqqqqqpgqj484m90983sqgxd4qnldntwl34ghzkydd8ssr8xnxe");
+ 
+        
+    let sc: &Bech32Address = interact.state.current_address();
+    let sc_address: Address = sc.to_address();
+
+
+    interact.open_mystery_box_by_sc(sc_address, &tokensft_str, token_nonce, token_amount, ExpectError(4, "Only user accounts can open mystery boxes")).await;
+   // interact.open_mystery_box_by_admin_fail(sc_account_address, &tokensft_str, token_nonce, token_amount, ExpectError(4, "Only user accounts can open mystery boxes")).await;
+
+}
