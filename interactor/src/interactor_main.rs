@@ -23,9 +23,17 @@ use tokio::time::Duration;
 
 const GATEWAY: &str = sdk::gateway::DEVNET_GATEWAY;
 const STATE_FILE: &str = "state.toml";
+const TOKEN_IDENTIFIER2: &str = "TST-c0986b-01";
 const TOKEN_IDENTIFIER: &str = "TTO-281def";
-
 const INVALID_TOKEN_ID: &str = "xyz";
+const TOKEN_NONCE: u64 = 1;
+const TOKEN_SFT_AMOUNT: u64 = 1;
+
+
+const MB_TOKEN_IDENTIFIER: &str = "TTO-5c8209";
+
+const MB_TOKEN_IDENTIFIER_FAIL: &str = "TTO-5c8209-01";
+
 
 #[tokio::main]
 async fn main() {
@@ -118,7 +126,7 @@ impl ContractInteract {
         let wallet_address = interactor.register_wallet(test_wallets::alice());
         let user1_address = interactor.register_wallet(test_wallets::dan());
         let user2_address = interactor.register_wallet(test_wallets::frank());
-       
+
         let contract_code = BytesValue::interpret_from(
             "mxsc:../output/mystery-box.mxsc.json",
             &InterpreterContext::default(),
@@ -134,8 +142,7 @@ impl ContractInteract {
         }
     }
 
-    async fn deploy(&mut self) 
-    {
+    async fn deploy(&mut self) {
         let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
 
         let new_address = self
@@ -159,8 +166,8 @@ impl ContractInteract {
     }
 
     async fn deploy_fail(&mut self, expected_result: ExpectError<'_>) {
-        const TOKEN_IDENTIFIER: &str = "ax";
-        let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
+      
+        let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(INVALID_TOKEN_ID);
         self.interactor
             .tx()
             .from(&self.wallet_address)
@@ -317,6 +324,233 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
+
+
+
+
+    async fn setup_mystery_box_reward_mystery_box(&mut self) {
+
+
+        let mut winning_rates_list = MultiValueVec::<
+            MultiValue6<
+                RewardType,
+                EgldOrEsdtTokenIdentifier<StaticApi>,
+                BigUint<StaticApi>,
+                ManagedBuffer<StaticApi>,
+                u64,
+                u64,
+            >,
+        >::new();
+
+        let mut reward1 = (
+            RewardType::MysteryBox,
+            EgldOrEsdtTokenIdentifier::esdt(managed_token_id!(MB_TOKEN_IDENTIFIER)),
+            BigUint::from(1u128),
+            managed_buffer!(b"MysteryBox"),
+            10_000,
+            0,
+        )
+            .into();
+        winning_rates_list.push(reward1);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address) // Verifică dacă această adresă are permisiuni de admin
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .setup_mystery_box(winning_rates_list)
+            .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+
+
+
+
+    ////////            FAIL URI REWARD URI
+
+    async fn setup_mystery_box_reward_mystery_box_fail(&mut self, expected_result: ExpectError<'_>) {
+
+
+        let mut winning_rates_list = MultiValueVec::<
+            MultiValue6<
+                RewardType,
+                EgldOrEsdtTokenIdentifier<StaticApi>,
+                BigUint<StaticApi>,
+                ManagedBuffer<StaticApi>,
+                u64,
+                u64,
+            >,
+        >::new();
+
+        let mut reward1 = (
+            RewardType::MysteryBox,
+            EgldOrEsdtTokenIdentifier::esdt(managed_token_id!(MB_TOKEN_IDENTIFIER_FAIL)),
+            BigUint::from(1u128),
+            managed_buffer!(b"MysteryBox"),
+            10_000,
+            0,
+        )
+            .into();
+        winning_rates_list.push(reward1);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address) // Verifică dacă această adresă are permisiuni de admin
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .setup_mystery_box(winning_rates_list)
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+    async fn setup_mystery_box_reward_ExperiencePoints_fail(&mut self, expected_result: ExpectError<'_>) {
+
+
+        let mut winning_rates_list = MultiValueVec::<
+            MultiValue6<
+                RewardType,
+                EgldOrEsdtTokenIdentifier<StaticApi>,
+                BigUint<StaticApi>,
+                ManagedBuffer<StaticApi>,
+                u64,
+                u64,
+            >,
+        >::new();
+
+        let mut reward1 = (
+            RewardType::ExperiencePoints,
+            EgldOrEsdtTokenIdentifier::esdt(managed_token_id!(MB_TOKEN_IDENTIFIER)),
+            BigUint::from(0u128),
+            managed_buffer!(b"ExperiencePoints"),
+            10_000,
+            0,
+        )
+            .into();
+        winning_rates_list.push(reward1);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address) // Verifică dacă această adresă are permisiuni de admin
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .setup_mystery_box(winning_rates_list)
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+
+
+    async fn setup_mystery_box_reward_SFT_fail(&mut self, expected_result: ExpectError<'_>) {
+
+
+        let mut winning_rates_list = MultiValueVec::<
+            MultiValue6<
+                RewardType,
+                EgldOrEsdtTokenIdentifier<StaticApi>,
+                BigUint<StaticApi>,
+                ManagedBuffer<StaticApi>,
+                u64,
+                u64,
+            >,
+        >::new();
+
+        let mut reward1 = (
+            RewardType::SFT,
+            EgldOrEsdtTokenIdentifier::egld(),
+            BigUint::from(1u128),
+            managed_buffer!(b"SFT"),
+            10_000,
+            0,
+        )
+            .into();
+        winning_rates_list.push(reward1);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address) // Verifică dacă această adresă are permisiuni de admin
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .setup_mystery_box(winning_rates_list)
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+
+
+
+
+    async fn setup_mystery_box_reward_PercentValue_fail(&mut self, expected_result: ExpectError<'_>) {
+
+
+        let mut winning_rates_list = MultiValueVec::<
+            MultiValue6<
+                RewardType,
+                EgldOrEsdtTokenIdentifier<StaticApi>,
+                BigUint<StaticApi>,
+                ManagedBuffer<StaticApi>,
+                u64,
+                u64,
+            >,
+        >::new();
+
+        let mut reward1 = (
+            RewardType::PercentValue,
+            EgldOrEsdtTokenIdentifier::egld(),
+            BigUint::from(0u128),
+            managed_buffer!(b"Percent"),
+            10_000,
+            0,
+        )
+            .into();
+        winning_rates_list.push(reward1);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address) // Verifică dacă această adresă are permisiuni de admin
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .setup_mystery_box(winning_rates_list)
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+
     async fn setup_mystery_box(&mut self) {
         let winning_rates_list = MultiValueVec::<
             MultiValue6<
@@ -427,24 +661,52 @@ impl ContractInteract {
 
     */
 
-    async fn open_mystery_box(&mut self, token_id : &str, token_nonce: u64, token_amount: BigUint<StaticApi>) {
-     //   let token_id = String::new();
-     //   let token_nonce = 0u64;
-     //   let token_amount = BigUint::<StaticApi>::from(0u128);
+    async fn open_mystery_box(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
 
         let response = self
             .interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(&self.user1_address)
             .to(self.state.current_address())
             .gas(50_000_000u64)
             .typed(proxy::MysteryBoxProxy)
             .open_mystery_box()
-            .payment((
-                TokenIdentifier::from(token_id),
-                token_nonce,
-                token_amount,
-            ))
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn open_mystery_box_user1(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.user1_address)
+            .to(self.state.current_address())
+            .gas(70_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
             .returns(ReturnsResultUnmanaged)
             .prepare_async()
             .run()
@@ -454,36 +716,239 @@ impl ContractInteract {
     }
 
 
-    async fn open_mystery_box_by_sc(&mut self, sc_account: Address, token_id : &str, token_nonce: u64, token_amount: BigUint<StaticApi>, expected_result: ExpectError<'_> ) {
+    async fn open_mystery_box_user2(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+    ) {
         //   let token_id = String::new();
         //   let token_nonce = 0u64;
         //   let token_amount = BigUint::<StaticApi>::from(0u128);
-   
-           let response = self
-               .interactor
-               .tx()
-               .from(sc_account)
-               .to(self.state.current_address())
-               .gas(50_000_000u64)
-               .typed(proxy::MysteryBoxProxy)
-               .open_mystery_box()
-               .payment((
-                   TokenIdentifier::from(token_id),
-                   token_nonce,
-                   token_amount,
-               ))
-               .returns(expected_result)
-               .prepare_async()
-               .run()
-               .await;
-   
-           println!("Result: {response:?}");
-       }
 
-       
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.user2_address)
+            .to(self.state.current_address())
+            .gas(50_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
 
-    async fn mystery_box_token_id(&mut self) -> TokenIdentifier<StaticApi>
-    {
+        println!("Result: {response:?}");
+    }
+
+    async fn open_mystery_box_by_user(
+        &mut self,
+        adresa: Address,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(adresa)
+            .to(self.state.current_address())
+            .gas(200_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(ReturnsResultUnmanaged)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn open_mystery_box_by_sc(
+        &mut self,
+        sc_account: Address,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+        expected_result: ExpectError<'_>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(sc_account)
+            .to(self.state.current_address())
+            .gas(50_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn open_mystery_box_wrong_token(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+        expected_result: ExpectError<'_>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(50_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    async fn open_mystery_box_wrong_amount(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+        expected_result: ExpectError<'_>,
+    ) {
+        //   let token_id = String::new();
+        //   let token_nonce = 0u64;
+        //   let token_amount = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(50_000_000u64)
+            .typed(proxy::MysteryBoxProxy)
+            .open_mystery_box()
+            .payment((TokenIdentifier::from(token_id), token_nonce, token_amount))
+            .returns(expected_result)
+            .prepare_async()
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+
+
+
+/* 
+
+    pub fn transfer_esdt_nft_execute(
+        &self,
+        
+        token: &TokenIdentifier<A>,
+        nonce: u64,
+        egld_value: &BigUint<A>,
+        gas_limit: u64,
+        endpoint_name: &ManagedBuffer<A>,
+        arg_buffer: &ManagedArgBuffer<A>,
+    ) -> Result<(), &'static [u8]> {
+        let mut payments: ManagedVec<A, EsdtTokenPayment<A>> = ManagedVec::new();
+        payments.push(EsdtTokenPayment::new(
+            token.clone(),
+            nonce,
+            egld_value.clone(),
+        ));
+        self.multi_esdt_transfer_execute(to, &payments, gas_limit, endpoint_name, arg_buffer)
+    }
+*/
+
+
+async fn feed_contract_egld(&mut self,
+    token_id: &str,
+    token_nonce: u64,
+    token_amount: BigUint<StaticApi>) {
+
+    let payment = EsdtTokenPayment::new(TokenIdentifier::from(token_id), token_nonce,  token_amount);
+
+    self.interactor
+        .tx()
+        .from(&self.wallet_address)
+        .to(self.state.current_address())
+       // .egld(NumExpr("0,050000000000000000"))
+      // .esdt(payment)
+      .single_esdt(&payment.token_identifier, payment.token_nonce, &payment.amount)
+        .prepare_async()
+        .run()
+        .await;
+}
+
+
+
+
+
+    async fn send_from_admin_to_user(
+        &mut self,
+        token_id: &str,
+        token_nonce: u64,
+        token_amount: BigUint<StaticApi>,
+    ) {
+        // Inițializarea tranzacției fără proxy specific
+       let payment = EsdtTokenPayment::new(TokenIdentifier::from(token_id), token_nonce,  token_amount);
+         self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)  // Adresa de la care se trimite (admin)
+            .to(&self.user1_address)      // Adresa de destinație (user)
+            .gas(70_000_000u64)           // Setare gas limit
+          //  .transfer_esdt_nft_execute( &TokenIdentifier::from(token_id), token_nonce, & token_amount) 
+           
+            .with_egld_or_single_esdt_transfer(payment)
+          //.transfer_esdt(&TokenIdentifier::from(token_id), token_nonce, & token_amount)
+             
+          //   .transfer();
+          
+             // Setare payment (token_id, nonce, amount)
+           
+           
+           .prepare_async()
+            .run()
+            .await;
+    
+        // Afișarea rezultatului
+    
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+    async fn mystery_box_token_id(&mut self) -> TokenIdentifier<StaticApi> {
         let result_value = self
             .interactor
             .query()
@@ -499,8 +964,7 @@ impl ContractInteract {
         result_value
     }
 
-    async fn token_issued(&mut self) -> TokenIdentifier<StaticApi>
-    {
+    async fn token_issued(&mut self) -> TokenIdentifier<StaticApi> {
         let result_value = self
             .interactor
             .query()
@@ -622,7 +1086,11 @@ impl ContractInteract {
         println!("Remove admin: {response:?}");
     }
 
-    async fn remove_admin_by_user_fail(&mut self, admin: Bech32Address, expected_result: ExpectError<'_>) {
+    async fn remove_admin_by_user_fail(
+        &mut self,
+        admin: Bech32Address,
+        expected_result: ExpectError<'_>,
+    ) {
         //   let address = bech32::decode("");
 
         let response = self
@@ -641,7 +1109,6 @@ impl ContractInteract {
         println!("Remove admin: {response:?}");
     }
 
-
     async fn admins(&mut self) {
         let result_value = self
             .interactor
@@ -657,64 +1124,57 @@ impl ContractInteract {
         println!("Admins: {result_value:?}");
     }
 
+    /*
 
+        async fn set_roles(&mut self) {
+            let response = self
+                .interactor
+                .tx()
+                .from(&self.wallet_address)
+                .to(self.state.current_address())
+                .gas(70_000_000u64)
+                .typed(proxy::MysteryBoxProxy)
+                .set_roles()
+                .returns(ReturnsResultUnmanaged)
+                .prepare_async()
+                .run()
+                .await;
 
+            println!("Set roles: {response:?}");
+        }
 
-    /* 
+        async fn issue_sft_collection(&mut self) {
+            //  let address = self.state.current_address();
 
-    async fn set_roles(&mut self) {
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(70_000_000u64)
-            .typed(proxy::MysteryBoxProxy)
-            .set_roles()
-            .returns(ReturnsResultUnmanaged)
-            .prepare_async()
-            .run()
-            .await;
+            //let managed_address = ManagedAddress::from_address(&address.to_address());Q
 
-        println!("Set roles: {response:?}");
-    }
+            const VALUE: u128 = 50000000000000000u128;
 
-    async fn issue_sft_collection(&mut self) {
-        //  let address = self.state.current_address();
+            //   let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
 
-        //let managed_address = ManagedAddress::from_address(&address.to_address());Q
+            let token_name = managed_buffer!(b"Nume");
+            let token_ticker = managed_buffer!(b"CLC");
+            let properties = SemiFungibleTokenProperties::default();
 
-        const VALUE: u128 = 50000000000000000u128;
+            let collection = self
+                .interactor
+                .tx()
+                .from(&self.wallet_address)
+                .to(ESDTSystemSCAddress.to_managed_address())
+                .gas(70_000_000u64)
+                .typed(ESDTSystemSCProxy)
+                .issue_semi_fungible(BigUint::from(VALUE), &token_name, &token_ticker, properties)
+                .returns(ReturnsResult)
+                .prepare_async()
+                .run()
+                .await;
 
-        //   let mystery_box_token_id = TokenIdentifier::from_esdt_bytes(TOKEN_IDENTIFIER);
+            self.state.set_collection(collection.to_string());
 
-        let token_name = managed_buffer!(b"Nume");
-        let token_ticker = managed_buffer!(b"CLC");
-        let properties = SemiFungibleTokenProperties::default();
-
-        let collection = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(ESDTSystemSCAddress.to_managed_address())
-            .gas(70_000_000u64)
-            .typed(ESDTSystemSCProxy)
-            .issue_semi_fungible(BigUint::from(VALUE), &token_name, &token_ticker, properties)
-            .returns(ReturnsResult)
-            .prepare_async()
-            .run()
-            .await;
-
-        self.state.set_collection(collection.to_string());
-
-        println!("Collection name: {}", collection.to_string());
-        //mysterybox_collection
-    }
-*/
-
-
-
-
+            println!("Collection name: {}", collection.to_string());
+            //mysterybox_collection
+        }
+    */
 
     async fn issue_token_set_all_roles(&mut self) {
         let token_name = managed_buffer!(b"Nume");
@@ -732,156 +1192,365 @@ impl ContractInteract {
             .run()
             .await;
     }
-
-
-  
 }
 
 //TESTE
 
+#[tokio::test]
+async fn test_deploy() {
+    let mut interact = ContractInteract::new().await;
+
+    interact.deploy().await;
+}
+
+#[tokio::test]
+async fn test_deploy_fail() {
+    let mut interact = ContractInteract::new().await;
+    interact
+        .deploy_fail(ExpectError(4, "Invalid token ID"))
+        .await;
+}
+
+#[tokio::test]
+async fn test_add_admin() {
+    let mut interact = ContractInteract::new().await;
+
+    let admin_nou: Bech32Address = interact.user1_address.clone().into();
+
+    interact.add_admin(admin_nou).await;
+}
+
+#[tokio::test]
+async fn test_remove_admin() {
+    let mut interact = ContractInteract::new().await;
+
+    let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
+    interact.is_admin(admin_de_sters.clone()).await;
+    interact.remove_admin(admin_de_sters).await;
+}
+
+#[tokio::test]
+async fn test_remove_admin_by_user_fail() {
+    let mut interact = ContractInteract::new().await;
+
+    let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
+    interact.is_admin(admin_de_sters.clone()).await;
+    interact
+        .remove_admin_by_user_fail(
+            admin_de_sters,
+            ExpectError(4, "You can not remove an admin if you are an user"),
+        )
+        .await;
+}
+
+#[tokio::test]
+async fn test_get_admins() {
+    let mut interact = ContractInteract::new().await;
+    interact.admins().await;
+}
+
+#[tokio::test]
+async fn test_verify_is_admin() {
+    let mut interact = ContractInteract::new().await;
+
+    let adresa: Bech32Address = interact.wallet_address.clone().into();
+    let adresa2: Bech32Address = interact.user1_address.clone().into();
+    interact.is_admin(adresa).await;
+    interact.is_admin(adresa2).await;
+}
+
+#[tokio::test]
+async fn test_create_mystery_box_without_setup() {
+    let mut interact = ContractInteract::new().await;
+    let amount = BigUint::<StaticApi>::from(1u128);
+    interact
+        .create_mystery_box_fail(
+            amount,
+            ExpectError(4, "The Mystery Box must be set up first"),
+        )
+        .await;
+}
+
+#[tokio::test]
+async fn test_setup_mysterybox_success() {
+    let mut interact = ContractInteract::new().await;
+    interact.setup_mystery_box1().await;
+}
+
+#[tokio::test]
+async fn test_setup_mysterybox_one_reward() {
+    let mut interact = ContractInteract::new().await;
+    interact.setup_mystery_box_one_reward().await;
+}
+
+#[tokio::test]
+async fn test_setup_mysterybox_fail_percentage() {
+    let mut interact = ContractInteract::new().await;
+    interact
+        .setup_mystery_box_fail_percentage(ExpectError(4, "The total percentage must be 100%"))
+        .await;
+}
+
+#[tokio::test]
+async fn test_get_winning_rates() {
+    let mut interact = ContractInteract::new().await;
+    interact.winning_rates().await;
+}
+
+#[tokio::test]
+async fn test_get_global_cooldown_epoch() {
+    let mut interact = ContractInteract::new().await;
+
+    let reward1 = RewardType::FixedValue;
+    let reward2 = RewardType::CustomReward;
+    let reward3 = RewardType::ExperiencePoints;
+    interact.global_cooldown_epoch(reward1).await;
+}
+
+#[tokio::test]
+async fn test_mystery_box_get_uris() {
+    let mut interact = ContractInteract::new().await;
+    interact.mystery_box_uris().await;
+}
+
+#[tokio::test]
+async fn test_mystery_box_get_token_id() {
+    let mut interact = ContractInteract::new().await;
+    interact.mystery_box_token_id().await;
+}
+
+#[tokio::test]
+async fn test_generate_sft_collection() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy().await;
+    //  interact.issue_sft_collection().await;
+}
+
+#[tokio::test]
+async fn test_create_mystery_box() {
+    let mut interact = ContractInteract::new().await;
+    interact.deploy().await;
+    let amount = BigUint::<StaticApi>::from(0u128);
+
+    //  interact.issue_sft_collection().await;
+    //    interact.setup_mystery_box1().await;
+
+    //      interact.set_roles().await;
+    //  interact.create_mystery_box(amount).await;
+}
+
+//SETUP
+
+#[tokio::test]
+async fn test_setup() {
+    let mut interact = ContractInteract::new().await;
+
+    interact.deploy().await;
+    interact.issue_token_set_all_roles().await;
+    interact.token_issued().await;
+    interact.mystery_box_token_id().await;
+}
+
+// CREARE MYSTERY BOX
+#[tokio::test]
+async fn test_setup_create_mystery_box() {
+    let mut interact = ContractInteract::new().await;
+
+    let amount = BigUint::<StaticApi>::from(1000u128);
+    interact.setup_mystery_box1().await;
+    interact.create_mystery_box(amount).await;
+}
+
+//OBTINERE TOKEN CREAT
+#[tokio::test]
+async fn test_getting_token_issued() {
+    let mut interact = ContractInteract::new().await;
+
+    interact.token_issued().await;
+}
+
+//OBTINERE TOKEN CREAT
+#[tokio::test]
+async fn test_getting_token_mystery_box() {
+    let mut interact = ContractInteract::new().await;
+
+    interact.mystery_box_token_id().await;
+}
+
+//DESCHIDERE MYSTERYBOX
+#[tokio::test]
+async fn test_open_mystery_box() {
+    let mut interact = ContractInteract::new().await;
+
+    let tokensft = interact.mystery_box_token_id().await;
+    let tokensft_str = tokensft.to_string();
+    let token_amount = BigUint::<StaticApi>::from(1u128);
+
+    // let token_amount: BigUint<StaticApi> = TOKEN_SFT_AMOUNT.into();
+    interact
+        .open_mystery_box(&tokensft_str, TOKEN_NONCE, token_amount)
+        .await;
+}
+
+    //OPEN MYSTERY BOX BY SC -> ERROR : "Only user accounts can open mystery boxes"  - PICA
     #[tokio::test]
-    async fn test_deploy() {
+    async fn test_open_mystery_box_by_sc() {
         let mut interact = ContractInteract::new().await;
 
-        interact.deploy().await;
-    }
-
-    #[tokio::test]
-    async fn test_deploy_fail() {
-        let mut interact = ContractInteract::new().await;
-        interact
-            .deploy_fail(ExpectError(4, "Invalid token ID"))
-            .await;
-    }
-
-    #[tokio::test]
-    async fn test_add_admin() {
-        let mut interact = ContractInteract::new().await;
-
-        let admin_nou: Bech32Address = interact.user1_address.clone().into();
-
-        interact.add_admin(admin_nou).await;
-    }
-
-    #[tokio::test]
-    async fn test_remove_admin() {
-        let mut interact = ContractInteract::new().await;
-
-        let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
-        interact.is_admin(admin_de_sters.clone()).await;
-        interact.remove_admin(admin_de_sters).await;
-    }
-
-    #[tokio::test]
-    async fn test_remove_admin_by_user_fail() {
-        let mut interact = ContractInteract::new().await;
-
-        let admin_de_sters: Bech32Address = interact.user1_address.clone().into();
-        interact.is_admin(admin_de_sters.clone()).await;
-        interact.remove_admin_by_user_fail(admin_de_sters, ExpectError(4, "You can not remove an admin if you are an user") ).await;
-    }
-
+        let tokensft = interact.token_issued().await;
+        let tokensft_str = tokensft.to_string();
     
+        let token_amount = BigUint::<StaticApi>::from(1u128);
 
-    #[tokio::test]
-    async fn test_get_admins() {
-        let mut interact = ContractInteract::new().await;
-        interact.admins().await;
-    }
+        //   let sc_account_address = multiversx_sc::types::Address::from_slice(b"erd1qqqqqqqqqqqqqpgqj484m90983sqgxd4qnldntwl34ghzkydd8ssr8xnxe");
 
-    #[tokio::test]
-    async fn test_verify_is_admin() {
-        let mut interact = ContractInteract::new().await;
+        let sc: &Bech32Address = interact.state.current_address();
+        let sc_address: Address = sc.to_address();
 
-        let adresa: Bech32Address = interact.wallet_address.clone().into();
-        let adresa2: Bech32Address = interact.user1_address.clone().into();
-        interact.is_admin(adresa).await;
-        interact.is_admin(adresa2).await;
-    }
-
-    #[tokio::test]
-    async fn test_create_mystery_box_without_setup() {
-        let mut interact = ContractInteract::new().await;
-        let amount = BigUint::<StaticApi>::from(1u128);
         interact
-            .create_mystery_box_fail(
-                amount,
-                ExpectError(4, "The Mystery Box must be set up first"),
+            .open_mystery_box_by_sc(
+                sc_address,
+                &tokensft_str,
+                TOKEN_NONCE,
+                token_amount,
+                ExpectError(4, "Only user accounts can open mystery boxes"),
+            )
+            .await;
+        // interact.open_mystery_box_by_admin_fail(sc_account_address, &tokensft_str, token_nonce, token_amount, ExpectError(4, "Only user accounts can open mystery boxes")).await;
+    }
+
+
+
+    //OPEN MYSTERY BOX WRONG TOKEN ID -> ERROR :  "Bad payment token"                 OK
+    #[tokio::test]
+    async fn test_open_mystery_box_with_wrong_amount() {
+        let mut interact = ContractInteract::new().await;
+
+        let tokensft = interact.token_issued().await;
+        let tokensft_str = tokensft.to_string();
+
+        // let tokensft_str = "TTO-5c8209";
+        let token_amount = BigUint::<StaticApi>::from(2u128);
+
+        interact
+            .open_mystery_box_wrong_amount(
+                &tokensft_str,
+                TOKEN_NONCE,
+                token_amount,
+                ExpectError(4, "Bad payment amount"),
             )
             .await;
     }
 
+
+
+    //OPEN MYSTERY BOX BY 2 USERS
     #[tokio::test]
-    async fn test_setup_mysterybox_success() {
+    async fn test_open_mystery_box_by_multiple_users()
+    {
         let mut interact = ContractInteract::new().await;
-        interact.setup_mystery_box1().await;
+
+        let tokensft = interact.token_issued().await;
+        let tokensft_str = tokensft.to_string();
+
+        let token_amount1 = BigUint::<StaticApi>::from(1u128);
+        let token_amount2 = BigUint::<StaticApi>::from(1u128);
+/* 
+        let user1_address = interact.user1_address.clone();
+        interact.open_mystery_box_by_user(user1_address, &tokensft_str, TOKEN_NONCE, token_amount1).await;
+        let user2_address = interact.user2_address.clone();
+        interact.open_mystery_box_by_user(user2_address, &tokensft_str, TOKEN_NONCE,token_amount2).await;*/
+
+
+        interact
+        .open_mystery_box_user1(&tokensft_str, TOKEN_NONCE, token_amount1)
+        .await;
+
+       // interact
+       // .open_mystery_box_user2(&tokensft_str, TOKEN_NONCE, token_amount2)
+       // .await;
+
+    }
+
+
+    // CREARE MYSTERY BOX care are ca reward un mystery box                  OK
+    #[tokio::test]
+    async fn test_setup_create_mystery_box_with_mystery_box_as_reward() {
+        let mut interact = ContractInteract::new().await;
+
+        let amount = BigUint::<StaticApi>::from(1000u128);
+        interact.setup_mystery_box_reward_mystery_box().await;
+        interact.create_mystery_box(amount).await;
+    }
+
+
+    // CREARE MYSTERY BOX care are ca reward un mystery box dar cu un ID gresit         OK
+    #[tokio::test]
+    async fn test_setup_mb_with_mystery_box_as_reward_fail() {
+        let mut interact = ContractInteract::new().await;
+
+        let amount = BigUint::<StaticApi>::from(1000u128);
+        interact.setup_mystery_box_reward_mystery_box_fail( ExpectError(4, "The reward token id must be the same as the mystery box")).await;
+    
+    }
+
+
+
+    #[tokio::test]
+    async fn test_setup_mb_ExperiencePoints_fail() {
+        let mut interact = ContractInteract::new().await;
+
+        interact.setup_mystery_box_reward_ExperiencePoints_fail( ExpectError(4, "The experience points amount must be greater than 0")).await;
     
     }
 
     #[tokio::test]
-    async fn test_setup_mysterybox_one_reward() {
+    async fn test_setup_mb_SFT_fail() {
         let mut interact = ContractInteract::new().await;
-        interact.setup_mystery_box_one_reward().await;
+
+       
+        interact.setup_mystery_box_reward_SFT_fail( ExpectError(4, "The reward token id must be an ESDT")).await;
+    
     }
 
+
+
     #[tokio::test]
-    async fn test_setup_mysterybox_fail_percentage() {
+    async fn test_setup_mb_PercentValue_fail() {
         let mut interact = ContractInteract::new().await;
+
+       
+        interact.setup_mystery_box_reward_PercentValue_fail( ExpectError(4, "The reward percentage must be positive and <= 100%")).await;
+    
+    }
+
+
+
+
+
+
+
+
+
+
+    //OPEN MYSTERY BOX WRONG TOKEN ID -> ERROR :  "Bad payment token"    - PICA Not enough balance 
+    #[tokio::test]
+    async fn test_open_mystery_box_with_wrong_token_id() {
+        let mut interact = ContractInteract::new().await;
+
+        let token_id = TOKEN_IDENTIFIER2;
+        let token_amount = BigUint::<StaticApi>::from(1000000000000000000u128);
+
+    //    interact.mystery_box_token_id().await; // get mystery box token id != payment token_id
         interact
-            .setup_mystery_box_fail_percentage(ExpectError(4, "The total percentage must be 100%"))
+            .open_mystery_box_wrong_token(
+                token_id,
+                TOKEN_NONCE,
+                token_amount,
+                ExpectError(4, "Bad payment token"),
+            )
             .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_winning_rates() {
-        let mut interact = ContractInteract::new().await;
-        interact.winning_rates().await;
-    }
-
-    #[tokio::test]
-    async fn test_get_global_cooldown_epoch() {
-        let mut interact = ContractInteract::new().await;
-
-        let reward1 = RewardType::FixedValue;
-        let reward2 = RewardType::CustomReward;
-        let reward3 = RewardType::ExperiencePoints;
-        interact.global_cooldown_epoch(reward1).await;
-    }
-
-    #[tokio::test]
-    async fn test_mystery_box_get_uris() {
-        let mut interact = ContractInteract::new().await;
-        interact.mystery_box_uris().await;
-    }
-
-    #[tokio::test]
-    async fn test_mystery_box_get_token_id() {
-        let mut interact = ContractInteract::new().await;
-        interact.mystery_box_token_id().await;
-    }
-
-
-
-
-    #[tokio::test]
-    async fn test_generate_sft_collection() {
-        let mut interact = ContractInteract::new().await;
-        interact.deploy().await;
-      //  interact.issue_sft_collection().await;
-    }
-
-    #[tokio::test]
-    async fn test_create_mystery_box() {
-        let mut interact = ContractInteract::new().await;
-        interact.deploy().await;
-        let amount = BigUint::<StaticApi>::from(0u128);
-
-      //  interact.issue_sft_collection().await;
-        //    interact.setup_mystery_box1().await;
-
-        //      interact.set_roles().await;
-        //  interact.create_mystery_box(amount).await;
-    }
+        }
 
 
 
@@ -891,75 +1560,21 @@ impl ContractInteract {
 
 
 
-
-
-
-
-
-    //SETUP 
-
-    #[tokio::test]
-    async fn test_setup() {
-        let mut interact = ContractInteract::new().await;
-
-       interact.deploy().await;
-        interact.issue_token_set_all_roles().await;
-    interact.token_issued().await;
-        interact.mystery_box_token_id().await;
-
-
-  
-    }
-
-
-    // CREARE MYSTERY BOX
-    #[tokio::test]
-    async fn test_setup_create_mystery_box() {
-        let mut interact = ContractInteract::new().await;
-
-        let amount = BigUint::<StaticApi>::from(10u128);
-        interact.setup_mystery_box1().await;
-        interact.create_mystery_box(amount).await;
-    }
-
-    //OBTINERE TOKEN CREAT
-    #[tokio::test]
-    async fn test_getting_token_issued() {
-        let mut interact = ContractInteract::new().await;
-
-     interact.token_issued().await;
-    }
-
-    #[tokio::test]
-    async fn test_open_mystery_box() {
-        let mut interact = ContractInteract::new().await;
-
-        let tokensft =  interact.token_issued().await;
-        let tokensft_str = tokensft.to_string();
-       let token_nonce = 0u64;
-       let token_amount = BigUint::<StaticApi>::from(0u128);
-       interact.open_mystery_box(&tokensft_str, token_nonce,token_amount ).await;
-    }
-
-
-    #[tokio::test]
-    async fn test_open_mystery_box_by_sc() {
+#[tokio::test]
+async fn test_tranzactie() {
     let mut interact = ContractInteract::new().await;
 
-    let tokensft = "TTO-81fa54";
+  //  interact.deploy().await;
+  //  interact.issue_token_set_all_roles().await;
+   // interact.setup_mystery_box().await;
+   // interact.create_mystery_box(amount).await;     //1000
+  
+   let tokensft = interact.mystery_box_token_id().await; //Intoarce token ul creat care e setat ca token id ul mystery box ului
     let tokensft_str = tokensft.to_string();
-    let token_nonce = 1u64;
-    let token_amount = BigUint::<StaticApi>::from(1u128);
+    let token_amount = BigUint::<StaticApi>::from(100u128); // de ex din cei 1000 a lui alice ii trimit 100 lui dan 
 
-
-  //   let sc_account_address = multiversx_sc::types::Address::from_slice(b"erd1qqqqqqqqqqqqqpgqj484m90983sqgxd4qnldntwl34ghzkydd8ssr8xnxe");
- 
-        
-    let sc: &Bech32Address = interact.state.current_address();
-    let sc_address: Address = sc.to_address();
-
-
-    interact.open_mystery_box_by_sc(sc_address, &tokensft_str, token_nonce, token_amount, ExpectError(4, "Only user accounts can open mystery boxes")).await;
-   // interact.open_mystery_box_by_admin_fail(sc_account_address, &tokensft_str, token_nonce, token_amount, ExpectError(4, "Only user accounts can open mystery boxes")).await;
+interact
+        .feed_contract_egld(&tokensft_str, TOKEN_NONCE, token_amount)    //ceva de genul 
+        .await;
 
 }
