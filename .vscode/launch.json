@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug test 'test_open_mystery_box_with_wrong_token_id'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--",
+                    "test_open_mystery_box_with_wrong_token_id"
+                ],
+                "filter": {
+                    "name":  "interactor_main",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "cargo build"
+        }
+    ]
+}

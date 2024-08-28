@@ -2,3 +2,6 @@
 [[proxy]]
 path = "interactor/src/proxy.rs"
  
+
+[[proxy]]
+path = "contracttest/src/mysterybox_proxy.rs"

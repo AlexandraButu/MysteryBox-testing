@@ -271,6 +271,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "contracttest"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "contracttest-meta"
+version = "0.0.0"
+dependencies = [
+ "contracttest",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

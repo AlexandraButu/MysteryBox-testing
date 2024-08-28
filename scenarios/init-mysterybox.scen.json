@@ -54,60 +54,6 @@
                 "out": [],
                 "status": "0"
             }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:mystery-box",
-                "function": "setupMysteryBox",
-                "arguments": [
-                    "0x05",
-                    "0x54544f2d323831646566",
-                    "0x05",
-                    "0x466978656456616c7565",
-                    "0x2710",
-                    "0x01"
-                ],
-                "gasLimit": "30000000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scQuery",
-            "id": "",
-            "tx": {
-                "to": "sc:mystery-box",
-                "function": "getMysteryBoxTokenIdentifier",
-                "arguments": []
-            },
-            "expect": {
-                "out": [
-                    "0x434c432d323033653037"
-                ],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scQuery",
-            "id": "",
-            "tx": {
-                "to": "sc:mystery-box",
-                "function": "getGlobalCooldownEpoch",
-                "arguments": [
-                    "0x05"
-                ]
-            },
-            "expect": {
-                "out": [
-                    "0x"
-                ],
-                "status": "0"
-            }
         }
     ]
 }

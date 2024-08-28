@@ -128,6 +128,18 @@ pub trait MysteryBox:
         self.mystery_box_token_id().get()
     }
 
+    #[endpoint(updateAttributes)]
+    fn update_attributes(&self, payment: EsdtTokenPayment<Self::Api>, caller: ManagedAddress) {
+        self.tx()
+            .to(caller)
+            .single_esdt(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .transfer();
+    }
+
     #[endpoint]
     fn set_roles(&self) {
         self.send()
@@ -187,13 +199,14 @@ pub trait MysteryBox:
             !self.blockchain().is_smart_contract(&caller),
             "Only user accounts can open mystery boxes"
         );
-        
+
         let payment = self.call_value().single_esdt();
         let mystery_box_token_id = self.mystery_box_token_id().get();
         require!(
             payment.token_identifier == mystery_box_token_id,
             "Bad payment token"
         );
+
         require!(payment.amount == SFT_AMOUNT, "Bad payment amount");
         let attributes: ManagedVec<Reward<Self::Api>> = self
             .blockchain()
@@ -235,5 +248,26 @@ pub trait MysteryBox:
     #[view(lastErrorMessage)]
     #[storage_mapper("lastErrorMessage")]
     fn last_error_message(&self) -> SingleValueMapper<ManagedBuffer>;
+
+
+    #[payable("*")]
+    #[endpoint]
+    fn send_nft(&self, to: ManagedAddress) {
+        let nft = self.call_value().single_esdt();
+
+        self.tx()
+            .to(to)
+            .raw_call("openMysteryBox")
+            .payment(nft)
+            .sync_call();
+    }
+
+
+
+
+
+
+
+
 
 }
