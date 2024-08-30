@@ -23,7 +23,7 @@ pub trait Contracttest {
 
         self.tx()
             .to(to)
-            .raw_call("openMysteryBox")
+            .raw_call("openMysteryBox") // face un call pentru open mystery box 
             .payment(nft)
             .sync_call();
     }

@@ -82,3 +82,5 @@ pub trait RewardsModule: config::ConfigModule {
         }
     }
 }
+
+//de testat cand un user deschide un mystery box si toate recompensele au cooldown-uri active si nu poate obtine niciuna 

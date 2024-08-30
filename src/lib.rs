@@ -196,7 +196,7 @@ pub trait MysteryBox:
     fn open_mystery_box(&self) {
         let caller = self.blockchain().get_caller();
         require!(
-            !self.blockchain().is_smart_contract(&caller),
+            !self.blockchain().is_smart_contract(&caller),  //verific sa fie user 
             "Only user accounts can open mystery boxes"
         );
 
@@ -204,8 +204,8 @@ pub trait MysteryBox:
         let mystery_box_token_id = self.mystery_box_token_id().get();
         require!(
             payment.token_identifier == mystery_box_token_id,
-            "Bad payment token"
-        );
+            "Bad payment token"   //verific ca tokenul cu care platesc sa fie = cu tokenul mysterybox ului (pot plati si cu nonce 1 , 2 ... etc)
+        ); 
 
         require!(payment.amount == SFT_AMOUNT, "Bad payment amount");
         let attributes: ManagedVec<Reward<Self::Api>> = self
@@ -261,12 +261,6 @@ pub trait MysteryBox:
             .payment(nft)
             .sync_call();
     }
-
-
-
-
-
-
 
 
 
